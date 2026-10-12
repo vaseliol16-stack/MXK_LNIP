@@ -1,0 +1,2680 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Сайт Олимпиадного МХК в ЛНИП">
+    <meta name="keywords" content="МХК, ЛНИП, Олимпиадное, олимпиада МХК">
+    <meta name="author" content="VASELIO L">
+    <title>МХК</title>
+    <script>
+        // Выполняется ДО отрисовки страницы: сразу ставит тему и
+        // признак входа, чтобы не было «мигания» светлой темы и окна входа.
+        (function () {
+            try {
+                var theme = localStorage.getItem('mxk-theme');
+                if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+                if (localStorage.getItem('mxk-session') || sessionStorage.getItem('mxk-session')) {
+                    document.documentElement.classList.add('is-auth');
+                }
+            } catch (e) { /* хранилище недоступно */ }
+        })();
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ===== Цвета сайта. Светлая тема (меняй здесь — поменяется везде) ===== */
+        :root {
+            color-scheme: light;
+            --bg: #ffffff;           /* фон страницы */
+            --surface: #ffffff;      /* карточки, окна, кнопки-«призраки» */
+            --surface-2: #f7f9fc;    /* панели теста */
+            --sky: #f0f8ff;          /* цитаты, плеер, выбранный ответ */
+            --text: #003366;         /* основной текст */
+            --text-soft: #3b4b5c;
+            --muted: #6b7280;
+            --line: #d3dde8;
+            --track: #c5d3e2;        /* полоски прогресса и ползунков */
+            --mark: #9fb2c6;         /* рамка чекбоксов */
+            --accent: #003366;       /* кнопки, шапка теста */
+            --accent-hover: #205481;
+            --on-accent: #ffffff;
+            --sidebar: #205481;
+            --sidebar-active: #003366;
+            --link-hover: #1e40af;
+            --ok: #1f7a45;
+            --ok-bg: #e8f5ed;
+            --ok-line: #8fcaa6;
+            --bad: #b3261e;
+            --bad-bg: #fdeceb;
+            --bad-line: #e7b7b3;
+            --focus-ring: rgba(0, 51, 102, 0.12);
+        }
+
+        /* ===== Тёмная тема: включается выбором «Тёмная»
+                или «Как в системе», если в системе тёмная ===== */
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --bg: #0f1822;
+            --surface: #16212d;
+            --surface-2: #1b2836;
+            --sky: #1a2b3d;
+            --text: #dbe7f3;
+            --text-soft: #b4c3d3;
+            --muted: #8d9cb0;
+            --line: #2b3b4d;
+            --track: #33475d;
+            --mark: #5a6f86;
+            --accent: #2f6aa8;
+            --accent-hover: #3b7cc4;
+            --on-accent: #ffffff;
+            --sidebar: #13283f;
+            --sidebar-active: #0b1a2a;
+            --link-hover: #8ab4f8;
+            --ok: #57c690;
+            --ok-bg: #143021;
+            --ok-line: #2f6b4b;
+            --bad: #f2867c;
+            --bad-bg: #3a1c1a;
+            --bad-line: #6b322d;
+            --focus-ring: rgba(138, 180, 248, 0.25);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) {
+                color-scheme: dark;
+                --bg: #0f1822;
+                --surface: #16212d;
+                --surface-2: #1b2836;
+                --sky: #1a2b3d;
+                --text: #dbe7f3;
+                --text-soft: #b4c3d3;
+                --muted: #8d9cb0;
+                --line: #2b3b4d;
+                --track: #33475d;
+                --mark: #5a6f86;
+                --accent: #2f6aa8;
+                --accent-hover: #3b7cc4;
+                --on-accent: #ffffff;
+                --sidebar: #13283f;
+                --sidebar-active: #0b1a2a;
+                --link-hover: #8ab4f8;
+                --ok: #57c690;
+                --ok-bg: #143021;
+                --ok-line: #2f6b4b;
+                --bad: #f2867c;
+                --bad-bg: #3a1c1a;
+                --bad-line: #6b322d;
+                --focus-ring: rgba(138, 180, 248, 0.25);
+            }
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            min-height: 100vh;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        /* ===== Вход: пока пользователь не вошёл, видно только окно входа ===== */
+        html:not(.is-auth) .sidebar,
+        html:not(.is-auth) .content { display: none; }
+        html.is-auth .login { display: none; }
+
+        .login {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--sky);
+        }
+        .login__header {
+            width: 100%;
+            padding: 20px 0;
+            text-align: center;
+            background: var(--accent);
+            color: var(--on-accent);
+        }
+        .login__card {
+            width: calc(100% - 32px);
+            max-width: 400px;
+            margin-top: 50px;
+            padding: 30px 32px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .login__card h2 { margin-bottom: 8px; }
+        .field {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--text);
+            font: inherit;
+        }
+        .field:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
+        .login__remember {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0 14px;
+            font-size: 0.9em;
+            color: var(--text-soft);
+            cursor: pointer;
+        }
+        .login__remember input { accent-color: var(--accent); }
+        .login__error { min-height: 1.4em; margin-bottom: 10px; color: var(--bad); font-size: 0.9em; text-align: center; }
+        .login__note { margin-top: 16px; font-size: 0.85em; color: var(--muted); text-align: center; }
+        .login__footer {
+            margin-top: auto;
+            padding: 2rem 16px;
+            font-size: 0.9rem;
+            color: var(--muted);
+            text-align: center;
+        }
+        .login .btn { width: 100%; padding: 12px; font-size: 1em; }
+
+        .sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            background-color: var(--sidebar);
+            padding: 20px 10px;
+            border-right: 2px solid var(--bg);
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #ffffff;
+            font-size: 1.4em;
+        }
+
+        nav ul {
+            list-style: none;
+        }
+
+        nav li {
+            margin-bottom: 5px;
+        }
+
+        nav a {
+            display: block;
+            padding: 12px 20px;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        nav a:hover, nav a:focus {
+            background-color: var(--sidebar-active);
+            transform: translateX(5px);
+            outline: none;
+        }
+
+        nav a.active {
+            background-color: var(--sidebar-active);
+            color: #ffffff;
+        }
+
+        /* Мини-карточка пользователя внизу меню */
+        .user-chip {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: #ffffff;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.08);
+            transition: background-color 0.2s;
+        }
+        .user-chip:hover, .user-chip.active { background: var(--sidebar-active); }
+        .user-chip__name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .user-chip__hint { font-size: 0.8em; opacity: 0.75; }
+
+        .avatar {
+            flex: 0 0 auto;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            background: #ffffff;
+            color: #003366;
+        }
+        .avatar--big { width: 56px; height: 56px; font-size: 1.4em; background: var(--accent); color: var(--on-accent); }
+
+        .internal-link:hover {
+            color: var(--link-hover);
+            text-decoration: underline;
+        }
+
+        .internal-link {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: normal;
+            transition: color 0.2s;
+        }
+
+        .content {
+            flex-grow: 1;
+            min-width: 0;
+            padding: 30px 40px;
+            overflow-y: auto;
+        }
+
+        .content a {
+            color: var(--text);
+        }
+        .content a:hover {
+            color: var(--link-hover);
+            text-decoration: underline;
+        }
+
+        .content p,
+        .content h2,
+        .content h3 {
+            margin-bottom: 12px;
+        }
+        .content h2 {
+            margin-top: 10px;
+        }
+        .content ol {
+            padding-left: 25px;
+            margin-bottom: 12px;
+        }
+
+        .page-section {
+            display: none;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        .content h1 {
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--text);
+            padding-bottom: 10px;
+            color: var(--text);
+        }
+
+        .materials-list {
+            list-style: none;
+            padding-left: 20px;
+        }
+        .materials-list li {
+            margin-bottom: 8px;
+            position: relative;
+        }
+        .materials-list li::before {
+            content: '•';
+            position: absolute;
+            left: -15px;
+            color: var(--text);
+        }
+        .materials-list .materials-list {
+            margin-top: 8px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                border-right: none;
+                border-bottom: 2px solid var(--line);
+            }
+            .user-chip { display: none; } /* на телефоне хватает пункта меню */
+            .content {
+                padding: 20px;
+            }
+        }
+        a {
+            text-decoration: none;
+        }
+        blockquote {
+            border-left: 4px solid var(--accent);
+            background-color: var(--sky);
+            padding: 15px 20px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+
+        /* Видимая рамка при навигации с клавиатуры — для всех кнопок сайта */
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        [tabindex]:focus-visible {
+            outline: 2px solid var(--link-hover);
+            outline-offset: 2px;
+        }
+
+        /* =====================================================
+           ЛИЧНЫЙ КАБИНЕТ
+           ===================================================== */
+        .cabinet { display: grid; gap: 16px; max-width: 640px; }
+        .panel {
+            padding: 20px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--surface);
+        }
+        .content .panel h2 { margin: 0 0 12px; font-size: 1.1em; }
+        .profile-head { display: flex; align-items: center; gap: 16px; }
+        .profile-head__info { flex: 1; min-width: 0; }
+        .content .profile-head__name { margin: 0; font-size: 1.2em; font-weight: 700; overflow-wrap: anywhere; }
+        .content .profile-head__role { margin: 2px 0 0; color: var(--muted); font-size: 0.9em; }
+
+        .stats { list-style: none; display: grid; gap: 8px; }
+        .stats li {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            background: var(--surface-2);
+        }
+        .stats b { color: var(--ok); white-space: nowrap; }
+        .content .stats-empty { margin: 0; color: var(--muted); }
+
+        .segmented {
+            display: inline-flex;
+            flex-wrap: wrap;
+            padding: 4px;
+            gap: 4px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--surface-2);
+        }
+        .segmented label { position: relative; cursor: pointer; }
+        .segmented input { position: absolute; opacity: 0; pointer-events: none; }
+        .segmented span {
+            display: block;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: var(--text-soft);
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .segmented input:checked + span { background: var(--accent); color: var(--on-accent); }
+        .segmented input:focus-visible + span { outline: 2px solid var(--link-hover); outline-offset: 2px; }
+
+        /* =====================================================
+           РЕДАКТОР ВОПРОСОВ (видят только «Роль 2» и Root)
+           ===================================================== */
+        .tests-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            max-width: 760px;
+            margin-bottom: 14px;
+        }
+        .content .tests-head p { margin: 0; }
+        .content .tests-status { max-width: 760px; font-size: 0.9em; color: var(--muted); }
+        .content .tests-status.is-error { color: var(--bad); }
+        .link-btn {
+            padding: 0;
+            border: none;
+            background: none;
+            font: inherit;
+            color: inherit;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .editor { display: grid; gap: 16px; max-width: 760px; }
+        .editor [hidden] { display: none !important; }
+        .f { display: grid; gap: 6px; align-content: start; margin-bottom: 18px; }
+        .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .ed-file:focus-within { outline: 2px solid var(--link-hover); outline-offset: 2px; }
+        .f > span { font-weight: 600; font-size: 0.95em; }
+        .f small { font-weight: normal; font-size: 0.85em; color: var(--muted); }
+        .f .field { margin: 0; }
+        .f-row { display: grid; grid-template-columns: 1fr 150px; gap: 12px; }
+        textarea.field { min-height: 70px; resize: vertical; line-height: 1.45; }
+
+        .ed-opt { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .ed-opt input[type="radio"],
+        .ed-opt input[type="checkbox"] {
+            flex: 0 0 auto;
+            width: 20px;
+            height: 20px;
+            accent-color: var(--ok);
+            cursor: pointer;
+        }
+        .ed-opt .field { flex: 1; min-width: 0; }
+        .ed-opt__del {
+            flex: 0 0 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--muted);
+            cursor: pointer;
+        }
+        .ed-opt__del svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2; }
+        .ed-opt__del:hover:not(:disabled) { color: var(--bad); border-color: var(--bad-line); }
+        .ed-opt__del:disabled { opacity: 0.35; cursor: default; }
+
+        .ed-image { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+        .ed-image img { max-width: 200px; max-height: 120px; border: 1px solid var(--line); border-radius: 6px; }
+
+        .content .ed-msg { min-height: 1.4em; margin-bottom: 10px; font-size: 0.9em; }
+        .content .ed-msg.is-ok { color: var(--ok); }
+        .content .ed-msg.is-error { color: var(--bad); }
+        .ed-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+
+        .ed-list { list-style: none; display: grid; gap: 8px; }
+        .ed-list li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            background: var(--surface-2);
+        }
+        .ed-list img { flex: 0 0 auto; width: 48px; height: 48px; object-fit: cover; border-radius: 4px; }
+        .ed-list__body { flex: 1; min-width: 0; display: grid; gap: 2px; }
+        .ed-list__body span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ed-list__body small { color: var(--muted); }
+        .ed-list .btn { padding: 6px 12px; }
+
+        @media (max-width: 600px) {
+            .f-row { grid-template-columns: 1fr; }
+        }
+
+        /* =====================================================
+           1. МУЗЫКАЛЬНЫЙ ПЛЕЕР
+           Плеер строится скриптом вокруг любого <audio>.
+           Название берётся из data-title="..."
+           ===================================================== */
+        .player {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            max-width: 560px;
+            margin: 16px 0 24px;
+            padding: 12px 16px;
+            background: var(--sky);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+        }
+        .player__play {
+            flex: 0 0 46px;
+            width: 46px;
+            height: 46px;
+            border: none;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--on-accent);
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .player__play:hover { background: var(--accent-hover); }
+        .player__play:active { transform: scale(0.94); }
+        .player__play svg { width: 20px; height: 20px; fill: currentColor; }
+
+        .player__body { flex: 1; min-width: 0; }
+        .player__title {
+            font-weight: 600;
+            font-size: 0.95em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 8px;
+        }
+        .player__row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .player__time {
+            font-size: 0.8em;
+            color: var(--muted);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+        .player__vol {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .player__vol .range { width: 80px; }
+        .player__mute {
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            padding: 4px;
+            display: grid;
+            border-radius: 4px;
+        }
+        .player__mute svg { width: 20px; height: 20px; fill: currentColor; }
+        .player.is-error .player__title::after {
+            content: ' (файл не найден — проверь путь)';
+            color: var(--bad);
+            font-weight: normal;
+        }
+
+        /* Ползунок: заполненная часть рисуется через переменную --fill */
+        .range {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: linear-gradient(to right, var(--accent) var(--fill, 0%), var(--track) var(--fill, 0%));
+            cursor: pointer;
+        }
+        .range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--surface);
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+        .range::-moz-range-thumb {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--surface);
+        }
+        .range::-moz-range-track { background: transparent; }
+
+        @media (max-width: 480px) {
+            .player__vol .range { display: none; }
+        }
+
+        .gallery-figure {
+            margin: 16px 0 20px;
+            max-width: 760px;
+        }
+        .gallery-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #1b1f24;
+            user-select: none;
+        }
+        .gallery-track {
+            display: flex;
+            transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+            touch-action: pan-y;
+            cursor: zoom-in;
+        }
+        .gallery-track.is-dragging {
+            transition: none;
+            cursor: grabbing;
+        }
+        .gallery-slide {
+            flex: 0 0 100%;
+            height: 380px;
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            place-items: center;
+        }
+        /* Размытый фон из той же картинки — как в ВК, без серых полос */
+        .gallery-slide::before {
+            content: '';
+            position: absolute;
+            inset: -30px;
+            background: var(--bg, none) center / cover no-repeat;
+            filter: blur(24px) brightness(0.7);
+        }
+        .gallery-slide img {
+            position: relative;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+            pointer-events: none;
+            -webkit-user-drag: none;
+        }
+        .gallery-slide.is-broken img { display: none; }
+        .gallery-slide.is-broken::after {
+            content: 'Ошибка поиска картинки: ' attr(data-src);
+            position: relative;
+            color: #c9d1d9;
+            font-size: 0.9em;
+            padding: 20px;
+            text-align: center;
+            word-break: break-all;
+        }
+
+        .gallery-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.85);
+            color: #003366;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.2s, background-color 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        }
+        .gallery-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.5; }
+        .gallery-container:hover .gallery-btn,
+        .gallery-container:focus-within .gallery-btn { opacity: 1; }
+        .gallery-btn:hover { background: #fff; }
+        .gallery-container .gallery-btn:disabled { opacity: 0; pointer-events: none; }
+        .gallery-btn--prev { left: 12px; }
+        .gallery-btn--next { right: 12px; }
+
+        .gallery-counter {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 2;
+            padding: 3px 10px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.55);
+            color: #fff;
+            font-size: 0.8em;
+            font-variant-numeric: tabular-nums;
+        }
+        .gallery-dots {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 10px;
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+        }
+        .gallery-dot {
+            width: 7px;
+            height: 7px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .gallery-dot.is-active { background: #fff; transform: scale(1.3); }
+
+        .gallery-figure figcaption {
+            text-align: center;
+            font-size: 0.9em;
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .gallery-slide { height: 260px; }
+            .gallery-btn { display: none; }
+        }
+
+        /* Полноэкранный просмотрщик */
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            background: rgba(10, 12, 15, calc(0.94 * var(--fade, 1)));
+            color: #e1e3e6;
+        }
+        .lightbox.is-open { display: flex; }
+        .lightbox__top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            font-size: 0.95em;
+            opacity: var(--fade, 1);
+        }
+        .lightbox__close {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: #e1e3e6;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+        }
+        .lightbox__close:hover { background: rgba(255, 255, 255, 0.12); }
+        .lightbox__close svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 2; }
+
+        .lightbox__stage {
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            touch-action: none;
+        }
+        .lightbox__img {
+            max-width: calc(100% - 160px);
+            max-height: 100%;
+            object-fit: contain;
+            user-select: none;
+            -webkit-user-drag: none;
+            cursor: pointer;
+            transition: transform 0.25s ease;
+        }
+        /* Зоны по бокам: вся полоса кликабельна, стрелка проявляется при наведении */
+        .lightbox__nav {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 80px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            opacity: 0.45;
+            transition: opacity 0.2s, background-color 0.2s;
+        }
+        .lightbox__nav:hover { opacity: 1; background: rgba(255, 255, 255, 0.05); }
+        .lightbox__nav svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 2; }
+        .lightbox__nav--prev { left: 0; }
+        .lightbox__nav--next { right: 0; }
+        .lightbox__nav[hidden] { display: none; }
+
+        .lightbox__caption {
+            min-height: 52px;
+            padding: 14px 20px 18px;
+            text-align: center;
+            font-size: 0.95em;
+            opacity: var(--fade, 1);
+        }
+
+        @media (max-width: 768px) {
+            .lightbox__img { max-width: 100%; }
+            .lightbox__nav { display: none; }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            font: inherit;
+            font-weight: 600;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+        }
+        .btn:disabled { opacity: 0.4; cursor: default; }
+        .btn--primary { background: var(--accent); color: var(--on-accent); }
+        .btn--primary:hover:not(:disabled) { background: var(--accent-hover); }
+        .btn--ghost { background: var(--surface); color: var(--text); border-color: var(--line); }
+        .btn--ghost:hover:not(:disabled) { border-color: var(--text); }
+        .btn--danger { background: var(--surface); color: var(--bad); border-color: var(--bad-line); }
+        .btn--danger:hover { background: var(--bad-bg); }
+
+        /* Список тестов */
+        .tests-list {
+            display: grid;
+            gap: 12px;
+            max-width: 760px;
+        }
+        .test-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 20px;
+            border: 1px solid var(--line);
+            border-left: 4px solid var(--accent-hover);
+            border-radius: 8px;
+            background: var(--surface);
+        }
+        .content .test-card__title { margin: 0 0 4px; font-size: 1.1em; }
+        .content .test-card__meta { margin: 0; color: var(--muted); font-size: 0.9em; }
+        .content .test-card__best { margin: 6px 0 0; font-size: 0.85em; color: var(--ok); font-weight: 600; }
+
+        /* Прохождение */
+        .quiz { max-width: 820px; }
+        .quiz__head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 14px 20px;
+            background: var(--accent);
+            color: var(--on-accent);
+            border-radius: 8px 8px 0 0;
+        }
+        .content .quiz__title { margin: 0; font-size: 1.15em; }
+        .quiz__timer {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.15);
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+        }
+        .quiz__timer svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+        .quiz__timer.is-low { background: #d9443a; }
+
+        .quiz__panel {
+            padding: 16px 20px;
+            border: 1px solid var(--line);
+            border-top: none;
+            background: var(--surface-2);
+        }
+        .quiz__nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .qnav {
+            width: 38px;
+            height: 38px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--text);
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+        .qnav:hover { border-color: var(--text); }
+        .qnav.is-answered { background: var(--ok-bg); border-color: var(--ok-line); color: var(--ok); }
+        .qnav.is-current { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+        .quiz__legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 10px;
+            font-size: 0.8em;
+            color: var(--muted);
+        }
+        .quiz__legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .legend-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            border: 1px solid var(--line);
+            background: var(--surface);
+        }
+        .legend-box--answered { background: var(--ok-bg); border-color: var(--ok-line); }
+        .legend-box--current { background: var(--accent); border-color: var(--accent); }
+
+        .qcard {
+            padding: 24px 20px;
+            border: 1px solid var(--line);
+            border-top: none;
+            background: var(--surface);
+        }
+        .content .qcard__num { margin: 0 0 8px; font-size: 0.85em; color: var(--muted); }
+        .content .qcard__text { margin: 0 0 6px; font-size: 1.1em; font-weight: 600; line-height: 1.45; }
+        .content .qcard__hint { margin: 0 0 16px; font-size: 0.85em; color: var(--muted); font-style: italic; }
+        .qcard__img { max-width: 100%; max-height: 320px; border-radius: 6px; margin: 8px 0 14px; display: block; }
+
+        .options { display: grid; gap: 8px; }
+        .option {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: border-color 0.15s, background-color 0.15s;
+            line-height: 1.4;
+        }
+        .option:hover { border-color: var(--accent-hover); }
+        .option:has(input:checked) { border-color: var(--accent); background: var(--sky); }
+        .option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .option__mark {
+            flex: 0 0 20px;
+            width: 20px;
+            height: 20px;
+            margin-top: 1px;
+            border: 2px solid var(--mark);
+            background: var(--surface);
+            display: grid;
+            place-items: center;
+            transition: border-color 0.15s;
+        }
+        .option--radio .option__mark { border-radius: 50%; }
+        .option--check .option__mark { border-radius: 4px; }
+        .option input:checked + .option__mark { border-color: var(--accent); }
+        .option--radio input:checked + .option__mark::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+        .option--check input:checked + .option__mark { background: var(--accent); }
+        .option--check input:checked + .option__mark::after {
+            content: '';
+            width: 5px;
+            height: 10px;
+            border: solid #fff;
+            border-width: 0 2px 2px 0;
+            transform: translateY(-1px) rotate(45deg);
+        }
+        .option input:focus-visible + .option__mark { outline: 2px solid var(--link-hover); outline-offset: 2px; }
+
+        .text-answer {
+            width: 100%;
+            max-width: 420px;
+            padding: 11px 14px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font: inherit;
+            color: var(--text);
+            background: var(--surface);
+        }
+        .text-answer:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
+
+        .quiz__actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 16px 20px;
+            border: 1px solid var(--line);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            background: var(--surface-2);
+        }
+        .quiz__actions .quiz__finish { margin-left: auto; }
+
+        /* Окно подтверждения */
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 900;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            background: rgba(0, 20, 40, 0.45);
+        }
+        .modal__box {
+            width: 100%;
+            max-width: 420px;
+            padding: 24px;
+            background: var(--surface);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        .content .modal__title { margin: 0 0 8px; font-size: 1.15em; }
+        .content .modal__text { margin: 0 0 20px; color: var(--text-soft); }
+        .modal__actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+        /* Результат */
+        .result { max-width: 820px; }
+        .result__head {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 20px;
+            border: 1px solid var(--line);
+            border-radius: 8px 8px 0 0;
+            background: var(--sky);
+        }
+        .result__score {
+            flex: 0 0 auto;
+            text-align: center;
+            line-height: 1;
+        }
+        .result__big { font-size: 3em; font-weight: 700; }
+        .result__of { display: block; margin-top: 4px; font-size: 0.9em; color: var(--muted); }
+        .content .result__title { margin: 0 0 4px; }
+        .content .result__verdict { margin: 0; }
+        .result__bar {
+            height: 8px;
+            background: var(--track);
+            border-left: 1px solid var(--line);
+            border-right: 1px solid var(--line);
+        }
+        .result__bar span { display: block; height: 100%; background: var(--accent); }
+
+        .content .review {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            border: 1px solid var(--line);
+            border-top: none;
+        }
+        .review__item {
+            padding: 16px 20px 16px 52px;
+            position: relative;
+            border-top: 1px solid var(--line);
+        }
+        .review__item:first-child { border-top: none; }
+        .review__item::before {
+            position: absolute;
+            left: 18px;
+            top: 16px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 0.8em;
+            font-weight: 700;
+            color: var(--surface);
+        }
+        .review__item.is-ok::before { content: '✓'; background: var(--ok); }
+        .review__item.is-bad::before { content: '✕'; background: var(--bad); }
+        .content .review__q { margin: 0 0 6px; font-weight: 600; }
+        .content .review__line { margin: 0 0 2px; font-size: 0.9em; }
+        .review__line b { font-weight: 600; }
+        .is-bad .review__yours { color: var(--bad); }
+        .review__right { color: var(--ok); }
+        .content .review__explain { margin: 6px 0 0; font-size: 0.85em; color: var(--muted); }
+        .result .quiz__actions { border-top: none; }
+
+        @media (max-width: 600px) {
+            .test-card { flex-direction: column; align-items: stretch; }
+            .quiz__actions .quiz__finish { margin-left: 0; width: 100%; }
+            .result__head { flex-direction: column; text-align: center; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .gallery-track, .lightbox__img { transition: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== ОКНО ВХОДА (бывший regisrindex.html) ===== -->
+    <div class="login" id="login">
+        <header class="login__header">
+            <h1>МХК</h1>
+        </header>
+
+        <form class="login__card" id="loginForm" novalidate>
+            <h2>Вход</h2>
+            <input class="field" id="loginInput" type="text" placeholder="Логин, выданный учителем" autocomplete="username" required>
+            <input class="field" id="passInput" type="password" placeholder="Пароль, выданный учителем" autocomplete="current-password" required>
+            <label class="login__remember">
+                <input type="checkbox" id="rememberInput" checked>
+                Запомнить меня на этом устройстве
+            </label>
+            <p class="login__error" id="errorMessage" role="alert"></p>
+            <button class="btn btn--primary" id="loginBtn" type="submit">Войти</button>
+            <p class="login__note">Нет логина? Его выдаёт учитель.</p>
+        </form>
+
+        <footer class="login__footer">
+            © 2026 Сайт для группы Олимпиадного МХК в ЛНИП. Все права защищены.
+        </footer>
+    </div>
+
+    <!-- Левое меню -->
+    <aside class="sidebar">
+        <h2>МХК ЛНИП</h2>
+        <nav>
+            <ul>
+                <li><a href="#" data-page="main">Главная / Материалы</a></li>
+                <li><a href="#" data-page="test">Тесты</a></li>
+                <li><a href="#" data-page="profile">Личный кабинет</a></li>
+            </ul>
+        </nav>
+
+        <!-- Мини-карточка пользователя: клик открывает личный кабинет -->
+        <a href="#" class="user-chip" data-page="profile" aria-label="Открыть личный кабинет">
+            <span class="avatar" data-user-initial></span>
+            <span style="min-width: 0;">
+                <span class="user-chip__name" data-user-name></span><br>
+                <span class="user-chip__hint" data-user-role></span>
+            </span>
+        </a>
+    </aside>
+
+    <main class="content">
+        <!-- Секция Главная -->
+        <section id="main" class="page-section active">
+            <h1>Информационные материалы</h1>
+            <p>Добро пожаловать на сайт Олимпиадного МХК в ЛНИПе г. Королёв!</p>
+
+            <p><strong>Содержание:</strong></p>
+            <ul class="materials-list">
+                <li><strong>1. Древний мир:</strong>
+                    <ul class="materials-list">
+                        <li><a href="#" data-page="oldworld">Древний мир</a></li>
+                        <li><a href="#" data-page="antichnost">Античность</a></li>
+                    </ul>
+                </li>
+
+                <li><strong>2. Средние века:</strong>
+                    <ul class="materials-list">
+                        <li><a href="#" data-page="ymd">Раннее Средневековье</a></li>
+                        <li><a href="#" data-page="romanstyle">Романский стиль</a></li>
+                        <li><a href="#" data-page="gothic">Готика</a></li>
+                    </ul>
+                </li>
+
+                <li><strong>3. Возрождение:</strong>
+                    <ul class="materials-list">
+                        <li><a href="#" data-page="italicv">Итальянское Возрождение</a></li>
+                        <li><a href="#" data-page="nordv">Северное Возрождение</a></li>
+                    </ul>
+                </li>
+
+                <li><strong>4. Новое время:</strong>
+                    <ul class="materials-list">
+                        <li><a href="#" data-page="barocco">Барокко</a></li>
+                        <li><a href="#" data-page="classic">Классицизм</a></li>
+                        <li><a href="#" data-page="romantic">Романтизм</a></li>
+                        <li><a href="#" data-page="realistic">Реализм</a></li>
+                        <li><a href="#" data-page="impression">Импрессионизм</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Тесты: всё содержимое рисует скрипт, вопросы — в массиве TESTS внизу -->
+        <section id="test" class="page-section">
+            <h1>Тесты</h1>
+            <div id="testApp"></div>
+        </section>
+
+        <!-- ===== ЛИЧНЫЙ КАБИНЕТ ===== -->
+        <section id="profile" class="page-section">
+            <h1>Личный кабинет</h1>
+            <div class="cabinet">
+                <div class="panel profile-head">
+                    <span class="avatar avatar--big" data-user-initial></span>
+                    <div class="profile-head__info">
+                        <p class="profile-head__name" data-user-name></p>
+                        <p class="profile-head__role">Роль: <span data-user-role></span></p>
+                    </div>
+                    <button class="btn btn--danger" type="button" id="logoutBtn">Выйти</button>
+                </div>
+
+                <div class="panel">
+                    <h2>Мои результаты</h2>
+                    <div id="myResults"></div>
+                </div>
+
+                <div class="panel">
+                    <h2>Оформление</h2>
+                    <div class="segmented" role="radiogroup" aria-label="Тема сайта">
+                        <label><input type="radio" name="theme" value="light"><span>Светлая</span></label>
+                        <label><input type="radio" name="theme" value="dark"><span>Тёмная</span></label>
+                        <label><input type="radio" name="theme" value="system"><span>Как в системе</span></label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="oldworld" class="page-section">
+            <h1><a href="#" data-page="main" style="text-decoration: none;">←</a></h1>
+            <h1>Древний мир</h1>
+            <h2>Первобытное искусство. Периодизация.</h2>
+
+            <p>Искусство первобытного мира можно подразделить на следующие части:</p>
+            <ol>
+                <li><strong>Палеолит;</strong></li>
+                <li><strong>Мезолит;</strong></li>
+                <li><strong>Неолит.</strong></li>
+            </ol>
+
+            <h2>Палеолит</h2>
+            <blockquote>Палеолит (от др.-греч. «παλαιός λίθος» — древнекаменный) — историческая эпоха, датируемая <strong>2 млн – 10 тыс. лет до н. э.</strong></blockquote>
+
+            <h3>Скульптура времён палеолита.</h3>
+            <p>Считается, что палеолит - первая эпоха, когда появляются первые религиозные культы и ритуалы. Скульптура палеолита часто является зооморфной.</p>
+
+            <!-- ГАЛЕРЕЯ. Стрелки, счётчик и точки скрипт добавит сам —
+                 нужно только повторять блок .gallery-slide.
+                 Текст из alt показывается подписью в полноэкранном просмотре. -->
+            <figure class="gallery-figure">
+                <div class="gallery-container">
+                    <div class="gallery-track">
+                        <div class="gallery-slide">
+                            <img src="images/Humanlion.jpg" alt="Человеколев из Холленштайна, 40-32 тысячи лет до н.э., Германия.">
+                        </div>
+                        <div class="gallery-slide">
+                            <img src="images/VeneraLespugskaya.jpg" alt="Леспюгская Венера, 23-е тысячелетие до н. э., Франция.">
+                        </div>
+                        <div class="gallery-slide">
+                            <img src="images/VeneraVestonickaya.jpg" alt="Вестоницкая Венера, между 29 000 и 25 000 гг. до н. э., Чехия.">
+                        </div>
+                        <div class="gallery-slide">
+                            <img src="images/VeneraVillendorfskaya.jpg" alt="Виллендорфская Венера, 27 000 лет до н.э., Австрия.">
+                        </div>
+                        <!-- Заготовка под 5-е фото: впиши имя файла и описание, потом убери комментарий
+                        <div class="gallery-slide">
+                            <img src="images/ИМЯ_ФАЙЛА.jpg" alt="Описание 5">
+                        </div> -->
+                    </div>
+                </div>
+                <figcaption>Примеры палеолитической скульптуры.</figcaption>
+            </figure>
+
+            <p>Чаще всего материалами для таких скульптур являлись: известняк, глина, слоновая кость. </p><br>
+
+            <h3>Наскальная живопись в палеолите.</h3>
+            <p>Как и в скульптуре, живопись палеолита отражает сцены охоты, собирательства и изображения животных. Для создания объема люди пользовались выпуклыми сводами пещер, ущелий. </p><br>
+
+            <figure class="gallery-figure">
+                <div class="gallery-container">
+                    <div class="gallery-track">
+                        <div class="gallery-slide">
+                            <img src="images/Altamir.jpg" alt="Пещера Альтамира, 33 000 – 11 000 лет до н.э., Испания.">
+                        </div>
+                        <div class="gallery-slide">
+                            <img src="images/Lasko.jpg" alt="Пещера Ласко - «Сикстинская капелла первобытной живописи». Зал быков (ок 18-15 тыс. до н.э.), Франция.">
+                        </div>
+                        <div class="gallery-slide">
+                            <img src="images/VeneraVestonickaya.jpg" alt="Вестоницкая Венера, между 29 000 и 25 000 гг. до н. э., Чехия.">
+                        </div>
+                        <div class="gallery-slide">
+                            <img src="images/VeneraVillendorfskaya.jpg" alt="Виллендорфская Венера, 27 000 лет до н.э., Австрия.">
+                        </div>
+                        <!-- Заготовка под 5-е фото: впиши имя файла и описание, потом убери комментарий
+                        <div class="gallery-slide">
+                            <img src="images/ИМЯ_ФАЙЛА.jpg" alt="Описание 5">
+                        </div> -->
+                    </div>
+                </div>
+                <figcaption>Примеры палеолитической скульптуры.</figcaption>
+            </figure>
+            <h2>Мезолит</h2>
+            <h2>Неолит</h2>
+            <h2>Глоссарий</h2>
+        </section>
+
+        <section id="antichnost" class="page-section">
+            <h1><a href="#" data-page="main" style="text-decoration: none;">←</a></h1>
+            <h1>Античность</h1>
+            <blockquote>Античность - период в искусстве... Античность подразделяют на греческую и римскую</blockquote><br>
+
+            <h3>Античность в Греции</h3>
+            <p></p>
+            <audio src="music/1.mp3" data-title="Какое-то произведение"></audio>
+
+            <h2>Античная скульптура</h2>
+            <p>1232456</p><br>
+
+            <h2>Античная живопись</h2>
+            <p>пупупу</p><br>
+
+            <h2>Античная графика</h2>
+            <p>пу-пу-пу</p>
+
+            <h2>Античная музыка</h2>
+
+            <h3>Римская / греческая</h3>
+        </section>
+
+        <section id="ymd" class="page-section">
+            <h1><a href="#" data-page="main" style="text-decoration: none;">←</a></h1>
+            <h1>Раннее Средневековье</h1>
+            <p>Данный раздел в разработке.</p>
+        </section>
+
+        <section id="romanstyle" class="page-section">
+            <h1><a href="#" data-page="main" style="text-decoration: none;">←</a></h1>
+            <h1>Романский стиль</h1>
+            <p>Данный раздел в разработке.</p>
+        </section>
+
+        <section id="gothic" class="page-section">
+            <h1><a href="#" data-page="main" style="text-decoration: none;">←</a></h1>
+            <h1>Готика</h1>
+            <p>Готика — период искусства</p>
+        </section>
+
+        <section id="italicv" class="page-section">
+            <h1><a href="#" data-page="main" style="text-decoration: none;">←</a></h1>
+            <h1>Итальянское Возрождение</h1>
+            <p>Данный раздел в разработке.</p>
+        </section>
+
+        <section id="nordv" class="page-section">
+            <h1><a href="#" data-page="main" style="text-decoration: none;">←</a></h1>
+            <h1>Северное Возрождение</h1>
+            <p>Северное Возрождение...</p>
+        </section>
+
+        <section id="barocco" class="page-section">
+            <h1><a href="#" data-page="main" style="text-decoration: none;">←</a></h1>
+            <h1>Барокко</h1>
+            <p>Барокко...</p>
+        </section>
+
+        <section id="classic" class="page-section">
+            <h1><a href="#" data-page="main" style="text-decoration: none;">←</a></h1>
+            <h1>Классицизм</h1>
+            <p>Классицизм...</p>
+        </section>
+
+        <section id="romantic" class="page-section">
+            <h1><a href="#" data-page="main" style="text-decoration: none;">←</a></h1>
+            <h1>Романтизм</h1>
+            <p>Романтизм...</p>
+        </section>
+
+        <section id="realistic" class="page-section">
+            <h1><a href="#" data-page="main" style="text-decoration: none;">←</a></h1>
+            <h1>Реализм</h1>
+            <p>Реализм...</p>
+        </section>
+
+        <section id="impression" class="page-section">
+            <h1><a href="#" data-page="main" style="text-decoration: none;">←</a></h1>
+            <h1>Импрессионизм</h1>
+            <p>Импрессионизм...</p>
+        </section>
+    </main>
+
+    <script>
+        // ===== Настройки =====
+        // Адрес веб-приложения Google Apps Script (файл Code.gs)
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyyd4tSgqgSVGaZY207LgdZn8aQzu5oC8CtVxcPMKAMZw6xGi1s62GhEAK75IKXnXwd/exec';
+        const SESSION_KEY = 'mxk-session';
+
+        // Ровно три роли. Слева — внутреннее имя, справа — как показывается на сайте
+        // и как пишется в столбце «Роль» листа Users.
+        const ROLES = {
+            user: 'Пользователь',   // проходит тесты
+            editor: 'Роль 2',       // + добавляет вопросы, удаляет свои
+            root: 'Root'            // + удаляет любые вопросы
+        };
+
+        // ===== Иконки (SVG), чтобы не тянуть картинки =====
+        const ICON = {
+            play:  '<svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg>',
+            pause: '<svg viewBox="0 0 24 24"><path d="M6.5 5h4v14h-4zm7 0h4v14h-4z"/></svg>',
+            vol:   '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>',
+            mute:  '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm17.6 0.4-1.4-1.4L17 10.2 14.8 8l-1.4 1.4 2.2 2.2-2.2 2.2 1.4 1.4 2.2-2.2 2.2 2.2 1.4-1.4-2.2-2.2z"/></svg>',
+            left:  '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+            right: '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>',
+            close: '<svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+            clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'
+        };
+
+        // ===== Навигация между разделами =====
+        const pageSections = document.querySelectorAll('.page-section');
+        const sidebarLinks = document.querySelectorAll('.sidebar nav a');
+        const defaultPage = 'main';
+
+        function showPage(pageId) {
+            if (!document.getElementById(pageId)) {
+                pageId = defaultPage;
+            }
+
+            pageSections.forEach(section => section.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+
+            const sidebarLink = document.querySelector(`.sidebar nav a[data-page="${pageId}"]`)
+                || document.querySelector(`.sidebar nav a[data-page="${defaultPage}"]`);
+
+            sidebarLinks.forEach(link => link.classList.remove('active'));
+            sidebarLink.classList.add('active');
+            document.querySelector('.user-chip').classList.toggle('active', pageId === 'profile');
+
+            if (pageId === 'profile') renderCabinet();
+
+            // Музыка не играет на других страницах
+            document.querySelectorAll('audio').forEach(a => a.pause());
+
+            window.scrollTo(0, 0);
+        }
+
+        function switchPage(event) {
+            event.preventDefault();
+            const clickedElement = event.target.closest('[data-page]');
+            if (!clickedElement) return;
+
+            const targetId = clickedElement.getAttribute('data-page');
+            window.history.pushState({}, "", `#${targetId}`);
+            showPage(targetId);
+        }
+
+        function initRouter() {
+            if (!currentUser()) return; // без входа разделы не показываем
+            const currentPage = window.location.hash.substring(1) || defaultPage;
+            showPage(currentPage);
+        }
+
+        // Один обработчик на весь документ — работает и для ссылок,
+        // которые скрипт добавит позже (например, в личном кабинете)
+        document.addEventListener('click', e => {
+            if (e.target.closest('a[data-page]')) switchPage(e);
+        });
+        window.addEventListener('popstate', initRouter);
+        document.addEventListener('DOMContentLoaded', initRouter);
+
+
+        // =====================================================
+        // 1. МУЗЫКАЛЬНЫЙ ПЛЕЕР
+        // =====================================================
+        function formatTime(sec) {
+            if (!isFinite(sec)) return '0:00';
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return m + ':' + String(s).padStart(2, '0');
+        }
+
+        function setFill(range) {
+            const pct = (range.value - range.min) / (range.max - range.min) * 100;
+            range.style.setProperty('--fill', pct + '%');
+        }
+
+        document.querySelectorAll('audio').forEach(audio => {
+            audio.removeAttribute('controls');
+            audio.preload = 'metadata';
+
+            const fileName = (audio.getAttribute('src') || '').split(/[\\/]/).pop().replace(/\.[^.]+$/, '');
+            const title = audio.dataset.title || fileName.replace(/[_-]+/g, ' ') || 'Аудиозапись';
+
+            const player = document.createElement('div');
+            player.className = 'player';
+            player.innerHTML = `
+                <button class="player__play" type="button" aria-label="Воспроизвести">${ICON.play}</button>
+                <div class="player__body">
+                    <div class="player__title"></div>
+                    <div class="player__row">
+                        <input class="range player__seek" type="range" min="0" max="1000" value="0" aria-label="Перемотка">
+                        <span class="player__time">0:00 / 0:00</span>
+                        <div class="player__vol">
+                            <button class="player__mute" type="button" aria-label="Выключить звук">${ICON.vol}</button>
+                            <input class="range player__volume" type="range" min="0" max="100" value="100" aria-label="Громкость">
+                        </div>
+                    </div>
+                </div>`;
+            player.querySelector('.player__title').textContent = title;
+            audio.parentNode.insertBefore(player, audio);
+            player.appendChild(audio);
+
+            const playBtn = player.querySelector('.player__play');
+            const seek = player.querySelector('.player__seek');
+            const time = player.querySelector('.player__time');
+            const muteBtn = player.querySelector('.player__mute');
+            const volume = player.querySelector('.player__volume');
+            let seeking = false;
+
+            const showTime = cur => { time.textContent = `${formatTime(cur)} / ${formatTime(audio.duration)}`; };
+            setFill(volume);
+
+            playBtn.addEventListener('click', () => {
+                if (audio.paused) audio.play().catch(() => player.classList.add('is-error'));
+                else audio.pause();
+            });
+
+            audio.addEventListener('play', () => {
+                // Одновременно играет только один плеер
+                document.querySelectorAll('audio').forEach(a => { if (a !== audio) a.pause(); });
+                playBtn.innerHTML = ICON.pause;
+                playBtn.setAttribute('aria-label', 'Пауза');
+            });
+            audio.addEventListener('pause', () => {
+                playBtn.innerHTML = ICON.play;
+                playBtn.setAttribute('aria-label', 'Воспроизвести');
+            });
+            audio.addEventListener('loadedmetadata', () => showTime(0));
+            audio.addEventListener('timeupdate', () => {
+                if (seeking || !audio.duration) return;
+                seek.value = audio.currentTime / audio.duration * 1000;
+                setFill(seek);
+                showTime(audio.currentTime);
+            });
+            audio.addEventListener('ended', () => { seek.value = 0; setFill(seek); });
+            audio.addEventListener('error', () => player.classList.add('is-error'));
+
+            seek.addEventListener('input', () => {
+                seeking = true;
+                setFill(seek);
+                showTime(seek.value / 1000 * (audio.duration || 0));
+            });
+            seek.addEventListener('change', () => {
+                if (audio.duration) audio.currentTime = seek.value / 1000 * audio.duration;
+                seeking = false;
+            });
+
+            function updateMute() {
+                const silent = audio.muted || audio.volume === 0;
+                muteBtn.innerHTML = silent ? ICON.mute : ICON.vol;
+                muteBtn.setAttribute('aria-label', silent ? 'Включить звук' : 'Выключить звук');
+            }
+            volume.addEventListener('input', () => {
+                audio.volume = volume.value / 100;
+                audio.muted = audio.volume === 0;
+                setFill(volume);
+                updateMute();
+            });
+            muteBtn.addEventListener('click', () => {
+                audio.muted = !audio.muted;
+                if (!audio.muted && audio.volume === 0) { audio.volume = 0.5; volume.value = 50; setFill(volume); }
+                updateMute();
+            });
+        });
+
+
+        // =====================================================
+        // 2. ПОЛНОЭКРАННЫЙ ПРОСМОТРЩИК (как в ВК)
+        // =====================================================
+        const lightbox = (() => {
+            const el = document.createElement('div');
+            el.className = 'lightbox';
+            el.setAttribute('role', 'dialog');
+            el.setAttribute('aria-modal', 'true');
+            el.setAttribute('aria-label', 'Просмотр фотографий');
+            el.innerHTML = `
+                <div class="lightbox__top">
+                    <span class="lightbox__counter"></span>
+                    <button class="lightbox__close" type="button" aria-label="Закрыть">${ICON.close}</button>
+                </div>
+                <div class="lightbox__stage">
+                    <button class="lightbox__nav lightbox__nav--prev" type="button" aria-label="Предыдущая фотография">${ICON.left}</button>
+                    <img class="lightbox__img" alt="">
+                    <button class="lightbox__nav lightbox__nav--next" type="button" aria-label="Следующая фотография">${ICON.right}</button>
+                </div>
+                <div class="lightbox__caption"></div>`;
+            document.body.appendChild(el);
+
+            const stage = el.querySelector('.lightbox__stage');
+            const img = el.querySelector('.lightbox__img');
+            const counter = el.querySelector('.lightbox__counter');
+            const caption = el.querySelector('.lightbox__caption');
+            const closeBtn = el.querySelector('.lightbox__close');
+            const prevBtn = el.querySelector('.lightbox__nav--prev');
+            const nextBtn = el.querySelector('.lightbox__nav--next');
+
+            let items = [], index = 0, lastFocus = null, onClose = null;
+
+            function render() {
+                const item = items[index];
+                img.src = item.src;
+                img.alt = item.alt;
+                img.style.transform = '';
+                counter.textContent = items.length > 1 ? `Фотография ${index + 1} из ${items.length}` : 'Фотография';
+                caption.textContent = item.alt || '';
+                prevBtn.hidden = nextBtn.hidden = items.length < 2;
+                // Заранее грузим соседние, чтобы листалось без задержки
+                [index - 1, index + 1].forEach(i => {
+                    const n = items[(i + items.length) % items.length];
+                    if (n) new Image().src = n.src;
+                });
+            }
+
+            function open(list, startIndex, closeCallback) {
+                items = list;
+                index = startIndex;
+                onClose = closeCallback || null;
+                lastFocus = document.activeElement;
+                el.classList.add('is-open');
+                document.body.style.overflow = 'hidden';
+                render();
+                closeBtn.focus();
+            }
+
+            function close() {
+                el.classList.remove('is-open');
+                el.style.removeProperty('--fade');
+                document.body.style.overflow = '';
+                if (onClose) onClose(index);
+                if (lastFocus) lastFocus.focus();
+            }
+
+            function go(step) {
+                if (items.length < 2) return;
+                index = (index + step + items.length) % items.length;
+                render();
+            }
+
+            closeBtn.addEventListener('click', close);
+            prevBtn.addEventListener('click', () => go(-1));
+            nextBtn.addEventListener('click', () => go(1));
+
+            // Свайп влево/вправо — листать, вниз/вверх — закрыть (как в мобильном ВК)
+            let startX = null, startY = 0, dx = 0, dy = 0, downTarget = null;
+            stage.addEventListener('pointerdown', e => {
+                if (e.target.closest('.lightbox__nav')) return;
+                startX = e.clientX;
+                startY = e.clientY;
+                dx = dy = 0;
+                downTarget = e.target;
+                img.style.transition = 'none';
+                stage.setPointerCapture(e.pointerId);
+            });
+            stage.addEventListener('pointermove', e => {
+                if (startX === null) return;
+                dx = e.clientX - startX;
+                dy = e.clientY - startY;
+                if (Math.abs(dy) > Math.abs(dx)) {
+                    img.style.transform = `translateY(${dy}px)`;
+                    el.style.setProperty('--fade', Math.max(0.25, 1 - Math.abs(dy) / 400));
+                } else {
+                    img.style.transform = `translateX(${dx}px)`;
+                }
+            });
+            function endDrag(e) {
+                if (startX === null) return;
+                startX = null;
+                img.style.transition = '';
+                el.style.removeProperty('--fade');
+                const ax = Math.abs(dx), ay = Math.abs(dy);
+
+                if (ax < 6 && ay < 6 && e.type === 'pointerup') {
+                    // Обычный клик: по фото — следующее, по тёмному фону — закрыть
+                    img.style.transform = '';
+                    if (downTarget === img) go(1);
+                    else if (downTarget === stage) close();
+                } else if (ay > ax && ay > 100) {
+                    close();
+                } else if (ax > 60 && items.length > 1) {
+                    go(dx < 0 ? 1 : -1);
+                } else {
+                    img.style.transform = '';
+                }
+            }
+            stage.addEventListener('pointerup', endDrag);
+            stage.addEventListener('pointercancel', endDrag);
+
+            document.addEventListener('keydown', e => {
+                if (!el.classList.contains('is-open')) return;
+                if (e.key === 'Escape') close();
+                else if (e.key === 'ArrowLeft') go(-1);
+                else if (e.key === 'ArrowRight') go(1);
+                else if (e.key === 'Tab') {
+                    const f = [closeBtn, prevBtn, nextBtn].filter(b => !b.hidden && b.offsetParent !== null);
+                    const i = f.indexOf(document.activeElement);
+                    e.preventDefault();
+                    f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+                }
+            });
+
+            return { open };
+        })();
+
+
+        // =====================================================
+        // 2. ЛЕНТА С ФОТО В ТЕКСТЕ (как пост в ВК)
+        // =====================================================
+        document.querySelectorAll('.gallery-container').forEach(gallery => {
+            const track = gallery.querySelector('.gallery-track');
+            const slides = [...track.querySelectorAll('.gallery-slide')];
+            if (!slides.length) return;
+
+            const items = slides.map(slide => {
+                const img = slide.querySelector('img');
+                const markBroken = () => {
+                    slide.classList.add('is-broken');
+                    slide.dataset.src = img.getAttribute('src');
+                };
+                img.addEventListener('error', markBroken);
+                if (img.complete && img.naturalWidth === 0) markBroken();
+                slide.style.setProperty('--bg', `url("${img.src}")`);
+                return { src: img.src, alt: img.alt };
+            });
+
+            // Элементы управления создаются автоматически
+            const make = (tag, cls, html) => {
+                const n = document.createElement(tag);
+                n.className = cls;
+                if (html) n.innerHTML = html;
+                return n;
+            };
+            const prev = make('button', 'gallery-btn gallery-btn--prev', ICON.left);
+            const next = make('button', 'gallery-btn gallery-btn--next', ICON.right);
+            prev.type = next.type = 'button';
+            prev.setAttribute('aria-label', 'Предыдущее фото');
+            next.setAttribute('aria-label', 'Следующее фото');
+            const counter = make('div', 'gallery-counter');
+            const dots = make('div', 'gallery-dots');
+            slides.forEach((_, i) => {
+                const d = make('button', 'gallery-dot');
+                d.type = 'button';
+                d.setAttribute('aria-label', `Фото ${i + 1}`);
+                d.addEventListener('click', () => goTo(i));
+                dots.appendChild(d);
+            });
+            if (slides.length > 1) gallery.append(prev, next, counter, dots);
+
+            gallery.tabIndex = 0;
+            gallery.setAttribute('aria-label', 'Фотографии: стрелки — листать, Enter — открыть');
+
+            let index = 0;
+
+            function update() {
+                track.style.transform = `translateX(${-index * 100}%)`;
+                prev.disabled = index === 0;
+                next.disabled = index === slides.length - 1;
+                counter.textContent = `${index + 1} / ${slides.length}`;
+                [...dots.children].forEach((d, i) => d.classList.toggle('is-active', i === index));
+            }
+
+            function goTo(i) {
+                index = Math.max(0, Math.min(i, slides.length - 1));
+                update();
+            }
+
+            const openViewer = () => lightbox.open(items, index, i => goTo(i));
+
+            prev.addEventListener('click', () => goTo(index - 1));
+            next.addEventListener('click', () => goTo(index + 1));
+
+
+            let startX = null, dx = 0;
+            track.addEventListener('pointerdown', e => {
+                if (e.button !== 0) return;
+                startX = e.clientX;
+                dx = 0;
+                track.classList.add('is-dragging');
+                track.setPointerCapture(e.pointerId);
+            });
+            track.addEventListener('pointermove', e => {
+                if (startX === null) return;
+                dx = e.clientX - startX;
+                let shift = dx;
+                // У краёв лента "упирается"
+                if ((index === 0 && shift > 0) || (index === slides.length - 1 && shift < 0)) shift /= 3;
+                track.style.transform = `translateX(calc(${-index * 100}% + ${shift}px))`;
+            });
+            function endDrag(e) {
+                if (startX === null) return;
+                startX = null;
+                track.classList.remove('is-dragging');
+                if (Math.abs(dx) < 6) {
+                    update();
+                    if (e.type === 'pointerup') openViewer();
+                } else if (dx < -50) goTo(index + 1);
+                else if (dx > 50) goTo(index - 1);
+                else update();
+            }
+            track.addEventListener('pointerup', endDrag);
+            track.addEventListener('pointercancel', endDrag);
+
+            gallery.addEventListener('keydown', e => {
+                if (e.target !== gallery) return;
+                if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(index - 1); }
+                else if (e.key === 'ArrowRight') { e.preventDefault(); goTo(index + 1); }
+                else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openViewer(); }
+            });
+
+            update();
+        });
+
+        // Встроенные тесты. Вопросы из листа Tests добавляются к ним после входа
+        const BUILTIN_TESTS = [
+            {
+                title: 'Первобытное искусство',
+                minutes: 10,
+                questions: [
+                    {
+                        type: 'single',
+                        text: 'Какая эпоха датируется примерно 2 млн – 10 тыс. лет до н. э.?',
+                        options: ['Палеолит', 'Мезолит', 'Неолит', 'Энеолит'],
+                        answer: 0
+                    },
+                    {
+                        type: 'single',
+                        text: 'В какой стране находится пещера Ласко?',
+                        options: ['Испания', 'Франция', 'Италия', 'Германия'],
+                        answer: 1,
+                        explain: 'Пещеру Ласко открыли в 1940 году на юго-западе Франции.'
+                    },
+                    {
+                        type: 'single',
+                        text: 'Где находится пещера Альтамира с изображениями бизонов?',
+                        options: ['Во Франции', 'В Испании', 'В Португалии', 'В Австрии'],
+                        answer: 1,
+                        explain: 'Альтамира — в Кантабрии, на севере Испании.'
+                    },
+                    {
+                        type: 'multiple',
+                        text: 'Из каких материалов делали палеолитические статуэтки?',
+                        options: ['Известняк', 'Мамонтовая кость', 'Обожжённая глина', 'Бронза', 'Фарфор'],
+                        answer: [0, 1, 2],
+                        explain: 'Бронза появится только в бронзовом веке, фарфор — намного позже.'
+                    },
+                    {
+                        type: 'text',
+                        text: 'Как называют известняковую статуэтку женщины, найденную в Австрии в 1908 году?',
+                        answer: ['венера виллендорфская', 'виллендорфская венера', 'венера из виллендорфа'],
+                        shown: 'Венера Виллендорфская'
+                    }
+                ]
+            },
+            {
+                title: 'Античность',
+                minutes: 10,
+                questions: [
+                    {
+                        type: 'single',
+                        text: 'Кто автор скульптуры «Дискобол»?',
+                        options: ['Фидий', 'Мирон', 'Поликлет', 'Пракситель'],
+                        answer: 1
+                    },
+                    {
+                        type: 'single',
+                        text: 'Какой богине посвящён Парфенон?',
+                        options: ['Афине', 'Гере', 'Афродите', 'Артемиде'],
+                        answer: 0
+                    },
+                    {
+                        type: 'multiple',
+                        text: 'Какие ордера сложились в архитектуре Древней Греции?',
+                        options: ['Дорический', 'Ионический', 'Коринфский', 'Готический', 'Романский'],
+                        answer: [0, 1, 2]
+                    },
+                    {
+                        type: 'text',
+                        text: 'Как называется постановка фигуры с опорой на одну ногу, при которой линии плеч и бёдер наклонены в разные стороны?',
+                        answer: ['контрапост', 'контрапосто'],
+                        shown: 'Контрапост'
+                    },
+                    {
+                        type: 'single',
+                        text: 'Кто создал «Дорифора» — статую, воплотившую «канон» пропорций?',
+                        options: ['Поликлет', 'Мирон', 'Лисипп', 'Скопас'],
+                        answer: 0
+                    }
+                ]
+            }
+        ];
+        let TESTS = BUILTIN_TESTS.slice();
+
+        const testApp = (() => {
+            const root = document.getElementById('testApp');
+            const HINT = {
+                single: 'Выберите один ответ',
+                multiple: 'Выберите все верные ответы',
+                text: 'Впишите ответ'
+            };
+            let state = null;  // текущее прохождение
+            let view = 'list'; // что сейчас на экране: list / quiz / result / editor
+            let ed = null;     // черновик в редакторе вопросов
+            const remote = { rows: [], status: 'idle', error: '' }; // вопросы из листа Tests
+
+            const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const norm = s => String(s).toLowerCase().replace(/ё/g, 'е').replace(/[«»"'.,!?]/g, '').replace(/\s+/g, ' ').trim();
+            const plural = (n, one, few, many) => {
+                const m10 = n % 10, m100 = n % 100;
+                if (m10 === 1 && m100 !== 11) return one;
+                if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+                return many;
+            };
+            const clock = sec => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+
+            // Лучшие результаты сохраняются в браузере
+            // У каждого ученика свои результаты (если за компьютером сидят по очереди)
+            function saveBest(title, score, total) {
+                try {
+                    const best = loadBest();
+                    if (!best[title] || best[title].score < score) {
+                        best[title] = { score, total };
+                        localStorage.setItem(bestKey(), JSON.stringify(best));
+                    }
+                } catch (e) { /* хранилище недоступно — просто не сохраняем */ }
+            }
+
+            function isAnswered(i) {
+                const a = state.answers[i];
+                return Array.isArray(a) ? a.length > 0 : a !== null && a !== '';
+            }
+
+            function isCorrect(q, a) {
+                if (q.type === 'single') return a === q.answer;
+                if (q.type === 'multiple') {
+                    const x = [...a].sort().join(), y = [...q.answer].sort().join();
+                    return x === y;
+                }
+                return a !== '' && q.answer.some(v => norm(v) === norm(a));
+            }
+
+            // ----- Список тестов -----
+            function renderList() {
+                view = 'list';
+                const best = loadBest();
+                let status = '';
+                if (remote.status === 'loading') status = '<p class="tests-status">Загружаем вопросы из таблицы…</p>';
+                if (remote.status === 'error') status = `<p class="tests-status is-error">Вопросы из таблицы не загрузились: ${esc(remote.error)} <button class="link-btn" type="button" data-action="reload">Повторить</button></p>`;
+                root.innerHTML = `
+                    <div class="tests-head">
+                        <p>Выберите тест. Ответы можно менять до завершения, а после — посмотреть разбор.</p>
+                        ${canEdit() ? '<button class="btn btn--primary" type="button" data-action="new">Добавить вопрос</button>' : ''}
+                    </div>
+                    ${status}
+                    <div class="tests-list">
+                        ${TESTS.map((t, i) => {
+                            const n = t.questions.length;
+                            const b = best[t.title];
+                            return `
+                            <article class="test-card">
+                                <div>
+                                    <h3 class="test-card__title">${esc(t.title)}</h3>
+                                    <p class="test-card__meta">${n} ${plural(n, 'вопрос', 'вопроса', 'вопросов')}${t.minutes ? `, ${t.minutes} мин` : ''}</p>
+                                    ${b ? `<p class="test-card__best">Лучший результат: ${b.score} из ${b.total}</p>` : ''}
+                                </div>
+                                <button class="btn btn--primary" type="button" data-action="start" data-test="${i}">Начать тест</button>
+                            </article>`;
+                        }).join('')}
+                    </div>`;
+            }
+
+            // ----- Прохождение ----- Время таймера регулируется в remaining 60 - 10 минут,1 - 10 сек
+            function start(testIndex) {
+                const test = TESTS[testIndex];
+                stopTimer();
+                state = {
+                    testIndex,
+                    test,
+                    current: 0,
+                    answers: test.questions.map(q => q.type === 'multiple' ? [] : (q.type === 'text' ? '' : null)),
+                    remaining: test.minutes * 60
+                };
+                if (test.minutes) state.timer = setInterval(tick, 1000);
+                renderQuestion();
+            }
+
+            function tick() {
+                state.remaining--;
+                const t = document.getElementById('quizTimer');
+                if (t) {
+                    t.querySelector('span').textContent = clock(Math.max(0, state.remaining));
+                    t.classList.toggle('is-low', state.remaining < 60);
+                }
+                if (state.remaining <= 0) finish(true);
+            }
+            function stopTimer() {
+                if (state && state.timer) clearInterval(state.timer);
+            }
+
+            function renderInput(q, a) {
+                if (q.type === 'text') {
+                    return `<input class="text-answer" type="text" value="${esc(a)}" placeholder="Ваш ответ" autocomplete="off" aria-label="Ваш ответ">`;
+                }
+                const multi = q.type === 'multiple';
+                return `<div class="options" role="${multi ? 'group' : 'radiogroup'}">
+                    ${q.options.map((opt, i) => {
+                        const checked = multi ? a.includes(i) : a === i;
+                        return `<label class="option ${multi ? 'option--check' : 'option--radio'}">
+                            <input type="${multi ? 'checkbox' : 'radio'}" name="answer" value="${i}" ${checked ? 'checked' : ''}>
+                            <span class="option__mark"></span>
+                            <span>${esc(opt)}</span>
+                        </label>`;
+                    }).join('')}
+                </div>`;
+            }
+
+            function renderQuestion() {
+                view = 'quiz';
+                const { test, current } = state;
+                const q = test.questions[current];
+                const n = test.questions.length;
+                const last = current === n - 1;
+
+                root.innerHTML = `
+                    <div class="quiz">
+                        <div class="quiz__head">
+                            <h2 class="quiz__title">${esc(test.title)}</h2>
+                            ${test.minutes ? `<div class="quiz__timer ${state.remaining < 60 ? 'is-low' : ''}" id="quizTimer" aria-label="Осталось времени">${ICON.clock}<span>${clock(state.remaining)}</span></div>` : ''}
+                        </div>
+                        <div class="quiz__panel">
+                            <nav class="quiz__nav" aria-label="Вопросы">
+                                ${test.questions.map((_, i) => `
+                                    <button type="button" class="qnav ${isAnswered(i) ? 'is-answered' : ''} ${i === current ? 'is-current' : ''}"
+                                        data-action="goto" data-q="${i}" aria-label="Вопрос ${i + 1}" ${i === current ? 'aria-current="step"' : ''}>${i + 1}</button>`).join('')}
+                            </nav>
+                            <div class="quiz__legend">
+                                <span><i class="legend-box legend-box--current"></i>Текущий</span>
+                                <span><i class="legend-box legend-box--answered"></i>Есть ответ</span>
+                                <span><i class="legend-box"></i>Без ответа</span>
+                            </div>
+                        </div>
+                        <section class="qcard">
+                            <p class="qcard__num">Вопрос ${current + 1} из ${n}</p>
+                            <p class="qcard__text">${esc(q.text)}</p>
+                            ${q.image ? `<img class="qcard__img" src="${esc(q.image)}" alt="Иллюстрация к вопросу">` : ''}
+                            <p class="qcard__hint">${HINT[q.type]}</p>
+                            ${renderInput(q, state.answers[current])}
+                        </section>
+                        <div class="quiz__actions">
+                            <button class="btn btn--ghost" type="button" data-action="prev" ${current === 0 ? 'disabled' : ''}>Назад</button>
+                            <button class="btn btn--primary" type="button" data-action="${last ? 'finish' : 'next'}">${last ? 'Завершить тест' : 'Следующий вопрос'}</button>
+                            ${last ? '' : '<button class="btn btn--danger quiz__finish" type="button" data-action="finish">Завершить тест</button>'}
+                        </div>
+                    </div>`;
+            }
+
+            function goTo(i) {
+                state.current = Math.max(0, Math.min(i, state.test.questions.length - 1));
+                renderQuestion();
+                root.scrollIntoView({ block: 'start' });
+            }
+
+            // Сохранение ответа без перерисовки (чтобы не терять фокус в поле ввода)
+            function saveAnswer(target) {
+                const q = state.test.questions[state.current];
+                if (q.type === 'text') state.answers[state.current] = target.value;
+                else if (q.type === 'single') state.answers[state.current] = Number(target.value);
+                else {
+                    state.answers[state.current] = [...root.querySelectorAll('input[name="answer"]:checked')].map(i => Number(i.value));
+                }
+                const tile = root.querySelector(`.qnav[data-q="${state.current}"]`);
+                if (tile) tile.classList.toggle('is-answered', isAnswered(state.current));
+            }
+
+            function askFinish() {
+                const n = state.test.questions.length;
+                const done = state.test.questions.filter((_, i) => isAnswered(i)).length;
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal__box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+                        <h3 class="modal__title" id="modalTitle">Завершить тест?</h3>
+                        <p class="modal__text">Вы ответили на ${done} из ${n} ${plural(n, 'вопроса', 'вопросов', 'вопросов')}.
+                        ${done < n ? 'Вопросы без ответа будут засчитаны как неверные.' : 'После завершения ответы изменить нельзя.'}</p>
+                        <div class="modal__actions">
+                            <button class="btn btn--ghost" type="button" data-modal="cancel">Вернуться к тесту</button>
+                            <button class="btn btn--primary" type="button" data-modal="ok">Завершить</button>
+                        </div>
+                    </div>`;
+                root.appendChild(modal);
+                modal.querySelector('[data-modal="ok"]').focus();
+                const closeModal = () => { modal.remove(); document.removeEventListener('keydown', onKey); };
+                const onKey = e => { if (e.key === 'Escape') closeModal(); };
+                document.addEventListener('keydown', onKey);
+                modal.addEventListener('click', e => {
+                    const b = e.target.closest('[data-modal]');
+                    if (e.target === modal || (b && b.dataset.modal === 'cancel')) closeModal();
+                    else if (b && b.dataset.modal === 'ok') { closeModal(); finish(false); }
+                });
+            }
+
+            // ----- Результат -----
+            function describe(q, a) {
+                if (q.type === 'text') return a === '' ? '—' : esc(a);
+                if (q.type === 'single') return a === null ? '—' : esc(q.options[a]);
+                return a.length ? a.map(i => esc(q.options[i])).join(', ') : '—';
+            }
+            function rightAnswer(q) {
+                if (q.type === 'text') return esc(q.shown || q.answer[0]);
+                if (q.type === 'single') return esc(q.options[q.answer]);
+                return q.answer.map(i => esc(q.options[i])).join(', ');
+            }
+
+            function finish(timeUp) {
+                stopTimer();
+                view = 'result';
+                const { test, answers } = state;
+                const results = test.questions.map((q, i) => isCorrect(q, answers[i]));
+                const score = results.filter(Boolean).length;
+                const total = results.length;
+                const pct = Math.round(score / total * 100);
+                saveBest(test.title, score, total);
+
+                let verdict = 'Стоит повторить материал';
+                if (pct >= 85) verdict = 'Отличный результат';
+                else if (pct >= 60) verdict = 'Хороший результат';
+                else if (pct >= 40) verdict = 'Есть над чем поработать';
+
+                root.innerHTML = `
+                    <div class="result">
+                        <div class="result__head">
+                            <div class="result__score">
+                                <span class="result__big">${score}</span>
+                                <span class="result__of">из ${total}</span>
+                            </div>
+                            <div>
+                                <h2 class="result__title">${esc(test.title)}</h2>
+                                <p class="result__verdict">${verdict}: ${pct}% верных ответов.${timeUp ? ' Время вышло, тест завершён автоматически.' : ''}</p>
+                            </div>
+                        </div>
+                        <div class="result__bar"><span style="width:${pct}%"></span></div>
+                        <ol class="review">
+                            ${test.questions.map((q, i) => `
+                                <li class="review__item ${results[i] ? 'is-ok' : 'is-bad'}">
+                                    <p class="review__q">${i + 1}. ${esc(q.text)}</p>
+                                    <p class="review__line review__yours"><b>Ваш ответ:</b> ${describe(q, answers[i])}</p>
+                                    ${results[i] ? '' : `<p class="review__line review__right"><b>Правильный ответ:</b> ${rightAnswer(q)}</p>`}
+                                    ${q.explain ? `<p class="review__explain">${esc(q.explain)}</p>` : ''}
+                                </li>`).join('')}
+                        </ol>
+                        <div class="quiz__actions">
+                            <button class="btn btn--primary" type="button" data-action="restart">Пройти ещё раз</button>
+                            <button class="btn btn--ghost" type="button" data-action="list">К списку тестов</button>
+                        </div>
+                    </div>`;
+                state.finished = true;
+            }
+
+
+            // =====================================================
+            // Вопросы из таблицы и редактор
+            // =====================================================
+            const TYPE_LABEL = { single: 'Один ответ', multiple: 'Несколько ответов', text: 'Ответ текстом' };
+
+            function canEdit() { return currentRole() === 'editor' || currentRole() === 'root'; }
+            function canDelete(row) {
+                return currentRole() === 'root' || (currentRole() === 'editor' && row.author === currentUser());
+            }
+
+            // Встроенные тесты + строки листа Tests (по совпадению названия теста)
+            function buildTests(rows) {
+                const tests = BUILTIN_TESTS.map(t => ({ ...t, questions: t.questions.slice() }));
+                rows.forEach(r => {
+                    let t = tests.find(x => x.title.toLowerCase() === r.test.toLowerCase());
+                    if (!t) {
+                        t = { title: r.test, minutes: r.minutes || 0, questions: [] };
+                        tests.push(t);
+                    }
+                    t.questions.push(r);
+                });
+                return tests;
+            }
+
+            async function loadRemote() {
+                remote.status = 'loading';
+                if (view === 'list') renderList();
+                try {
+                    const out = await api('tests');
+                    remote.rows = out.rows;
+                    TESTS = buildTests(out.rows);
+                    remote.status = 'ok';
+                } catch (err) {
+                    remote.status = 'error';
+                    remote.error = err.message;
+                }
+                if (view === 'list') renderList();
+            }
+
+            function freshDraft(prev) {
+                return {
+                    test: prev ? prev.test : '',
+                    minutes: prev ? prev.minutes : 10,
+                    type: prev ? prev.type : 'single',
+                    text: '', explain: '', textAns: '',
+                    options: ['', '', '', ''],
+                    correct: [0],
+                    image: null
+                };
+            }
+
+            function optionRow(text, i) {
+                const multi = ed.type === 'multiple';
+                return `<div class="ed-opt">
+                    <input type="${multi ? 'checkbox' : 'radio'}" name="edCorrect" value="${i}" ${ed.correct.includes(i) ? 'checked' : ''} aria-label="Вариант ${i + 1} правильный">
+                    <input class="field ed-opt__text" type="text" value="${esc(text)}" placeholder="Вариант ${i + 1}">
+                    <button class="ed-opt__del" type="button" data-action="del-option" data-i="${i}" aria-label="Удалить вариант ${i + 1}" ${ed.options.length <= 2 ? 'disabled' : ''}>${ICON.close}</button>
+                </div>`;
+            }
+            function renderOptions() {
+                root.querySelector('#edOptions').innerHTML = ed.options.map(optionRow).join('');
+            }
+
+            // Переносит всё, что введено в форме, в черновик ed
+            function collectForm() {
+                const val = id => { const el = root.querySelector(id); return el ? el.value : ''; };
+                ed.test = val('#edTest');
+                ed.minutes = val('#edMinutes');
+                ed.text = val('#edText');
+                ed.explain = val('#edExplain');
+                ed.textAns = val('#edTextAns');
+                const texts = root.querySelectorAll('.ed-opt__text');
+                if (texts.length) {
+                    ed.options = [...texts].map(i => i.value);
+                    ed.correct = [...root.querySelectorAll('input[name="edCorrect"]')]
+                        .map((c, i) => c.checked ? i : -1).filter(i => i >= 0);
+                }
+            }
+
+            function setMsg(text, isError) {
+                const m = root.querySelector('#edMsg');
+                if (!m) return;
+                m.textContent = text;
+                m.className = 'ed-msg ' + (isError ? 'is-error' : 'is-ok');
+            }
+
+            function renderEditor(message, isError) {
+                if (!canEdit()) return renderList();
+                view = 'editor';
+                if (!ed) ed = freshDraft();
+                const titles = [...new Set(TESTS.map(t => t.title))];
+                const rows = remote.rows.filter(canDelete);
+                const isRoot = currentRole() === 'root';
+
+                root.innerHTML = `
+                    <div class="editor">
+                        <div class="panel">
+                            <h2>Новый вопрос</h2>
+                            <div class="f-row">
+                                <label class="f"><span>Тест</span>
+                                    <input class="field" id="edTest" list="edTests" value="${esc(ed.test)}" placeholder="Существующий или новый тест">
+                                    <datalist id="edTests">${titles.map(t => `<option value="${esc(t)}">`).join('')}</datalist>
+                                </label>
+                                <label class="f"><span>Время, мин</span>
+                                    <input class="field" id="edMinutes" type="number" min="0" max="180" value="${esc(ed.minutes)}">
+                                    <small>Для нового теста, 0 — без таймера</small>
+                                </label>
+                            </div>
+
+                            <div class="f"><span>Тип вопроса</span>
+                                <div class="segmented" role="radiogroup" aria-label="Тип вопроса">
+                                    ${Object.keys(TYPE_LABEL).map(k => `<label><input type="radio" name="edType" value="${k}" ${ed.type === k ? 'checked' : ''}><span>${TYPE_LABEL[k]}</span></label>`).join('')}
+                                </div>
+                            </div>
+
+                            <label class="f"><span>Текст вопроса</span>
+                                <textarea class="field" id="edText" rows="3">${esc(ed.text)}</textarea>
+                            </label>
+
+                            <div class="f"><span>Картинка <small>(необязательно)</small></span>
+                                <div class="ed-image">
+                                    <label class="btn btn--ghost ed-file"><input class="sr" type="file" id="edImage" accept="image/*">Выбрать картинку</label>
+                                    <img id="edPreview" alt="Выбранная картинка" ${ed.image ? `src="${ed.image.preview}"` : 'hidden'}>
+                                    <button class="btn btn--ghost" type="button" data-action="clear-image" ${ed.image ? '' : 'hidden'}>Убрать</button>
+                                </div>
+                            </div>
+
+                            <div class="f" id="edOptionsWrap" ${ed.type === 'text' ? 'hidden' : ''}>
+                                <span>Варианты ответа</span>
+                                <small>Отметьте правильные кружком или галочкой слева</small>
+                                <div id="edOptions"></div>
+                                <div><button class="btn btn--ghost" type="button" data-action="add-option">Добавить вариант</button></div>
+                            </div>
+
+                            <label class="f" id="edTextWrap" ${ed.type === 'text' ? '' : 'hidden'}><span>Правильные ответы</span>
+                                <input class="field" id="edTextAns" value="${esc(ed.textAns)}" placeholder="контрапост; контрапосто">
+                                <small>Несколько вариантов написания — через точку с запятой. Регистр и «ё» не важны.</small>
+                            </label>
+
+                            <label class="f"><span>Пояснение <small>(необязательно)</small></span>
+                                <textarea class="field" id="edExplain" rows="2" placeholder="Покажется в разборе после теста">${esc(ed.explain)}</textarea>
+                            </label>
+
+                            <p class="ed-msg ${isError ? 'is-error' : 'is-ok'}" id="edMsg" role="status">${message ? esc(message) : ''}</p>
+                            <div class="ed-actions">
+                                <button class="btn btn--ghost" type="button" data-action="list">К списку тестов</button>
+                                <button class="btn btn--primary" type="button" data-action="save-q" id="edSave">Сохранить вопрос</button>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <h2>${isRoot ? 'Все вопросы из таблицы' : 'Мои вопросы'}</h2>
+                            ${rows.length ? `<ul class="ed-list">${rows.map(r => `
+                                <li>
+                                    ${r.image ? `<img src="${esc(r.image)}" alt="">` : ''}
+                                    <div class="ed-list__body">
+                                        <b>${esc(r.test)}</b>
+                                        <span>${esc(r.text)}</span>
+                                        ${isRoot ? `<small>Автор: ${esc(r.author || '—')}</small>` : ''}
+                                    </div>
+                                    <button class="btn btn--danger" type="button" data-action="delete-q" data-id="${esc(r.id)}">Удалить</button>
+                                </li>`).join('')}</ul>`
+                            : '<p class="stats-empty">Пока нет вопросов.</p>'}
+                        </div>
+                    </div>`;
+                if (ed.type !== 'text') renderOptions();
+            }
+
+            // Уменьшает фото до 1280 px по длинной стороне и переводит в JPEG
+            function readImage(file) {
+                return new Promise((resolve, reject) => {
+                    const url = URL.createObjectURL(file);
+                    const img = new Image();
+                    img.onload = () => {
+                        const k = Math.min(1, 1280 / Math.max(img.width, img.height));
+                        const c = document.createElement('canvas');
+                        c.width = Math.round(img.width * k);
+                        c.height = Math.round(img.height * k);
+                        const ctx = c.getContext('2d');
+                        ctx.fillStyle = '#fff';
+                        ctx.fillRect(0, 0, c.width, c.height);
+                        ctx.drawImage(img, 0, 0, c.width, c.height);
+                        URL.revokeObjectURL(url);
+                        const dataUrl = c.toDataURL('image/jpeg', 0.85);
+                        resolve({
+                            preview: dataUrl,
+                            data: dataUrl.split(',')[1],
+                            mime: 'image/jpeg',
+                            name: file.name.replace(/\.[^.]+$/, '') + '.jpg'
+                        });
+                    };
+                    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Не получилось открыть этот файл как картинку.')); };
+                    img.src = url;
+                });
+            }
+
+            async function saveQuestion() {
+                collectForm();
+                const q = {
+                    test: ed.test.trim(),
+                    minutes: Number(ed.minutes) || 0,
+                    type: ed.type,
+                    text: ed.text.trim(),
+                    explain: ed.explain.trim()
+                };
+                let err = '';
+                if (!q.test) err = 'Укажите название теста.';
+                else if (!q.text) err = 'Введите текст вопроса.';
+                else if (q.type === 'text') {
+                    q.answers = ed.textAns.split(';').map(s => s.trim()).filter(Boolean);
+                    if (!q.answers.length) err = 'Впишите хотя бы один правильный ответ.';
+                } else {
+                    const opts = ed.options.map((t, i) => ({ t: t.trim(), ok: ed.correct.includes(i) })).filter(o => o.t);
+                    q.options = opts.map(o => o.t);
+                    q.correct = opts.map((o, i) => o.ok ? i : -1).filter(i => i >= 0);
+                    if (opts.length < 2) err = 'Нужно минимум два заполненных варианта.';
+                    else if (!q.correct.length) err = 'Отметьте правильный вариант.';
+                }
+                if (err) return setMsg(err, true);
+                if (ed.image) q.image = { data: ed.image.data, mime: ed.image.mime, name: ed.image.name };
+
+                const btn = root.querySelector('#edSave');
+                btn.disabled = true;
+                btn.textContent = 'Сохраняем…';
+                setMsg('');
+                try {
+                    await api('addQuestion', { question: q });
+                    ed = freshDraft(ed);
+                    await loadRemote();
+                    renderEditor(`Вопрос добавлен в тест «${q.test}».`);
+                } catch (e) {
+                    setMsg(e.message, true);
+                    btn.disabled = false;
+                    btn.textContent = 'Сохранить вопрос';
+                }
+            }
+
+            async function deleteQuestion(id) {
+                const row = remote.rows.find(r => r.id === id);
+                if (!row || !confirm(`Удалить вопрос «${row.text.slice(0, 80)}»?`)) return;
+                collectForm();
+                try {
+                    await api('deleteQuestion', { id });
+                    await loadRemote();
+                    renderEditor('Вопрос удалён.');
+                } catch (e) {
+                    setMsg(e.message, true);
+                }
+            }
+
+            // ----- События -----
+            root.addEventListener('click', e => {
+                const btn = e.target.closest('[data-action]');
+                if (!btn) return;
+                const action = btn.dataset.action;
+                if (action === 'start') start(Number(btn.dataset.test));
+                else if (action === 'next') goTo(state.current + 1);
+                else if (action === 'prev') goTo(state.current - 1);
+                else if (action === 'goto') goTo(Number(btn.dataset.q));
+                else if (action === 'finish') askFinish();
+                else if (action === 'restart') start(state.testIndex);
+                else if (action === 'list') { state = null; renderList(); }
+                else if (action === 'reload') loadRemote();
+                else if (action === 'new') { ed = null; renderEditor(); }
+                else if (action === 'save-q') saveQuestion();
+                else if (action === 'delete-q') deleteQuestion(btn.dataset.id);
+                else if (action === 'add-option') {
+                    collectForm();
+                    ed.options.push('');
+                    renderOptions();
+                    [...root.querySelectorAll('.ed-opt__text')].pop().focus();
+                }
+                else if (action === 'del-option') {
+                    collectForm();
+                    const i = Number(btn.dataset.i);
+                    ed.options.splice(i, 1);
+                    ed.correct = ed.correct.filter(c => c !== i).map(c => c > i ? c - 1 : c);
+                    renderOptions();
+                }
+                else if (action === 'clear-image') {
+                    ed.image = null;
+                    root.querySelector('#edImage').value = '';
+                    root.querySelector('#edPreview').hidden = true;
+                    btn.hidden = true;
+                }
+            });
+            root.addEventListener('change', e => {
+                const t = e.target;
+                if (t.name === 'answer') saveAnswer(t);
+                else if (t.name === 'edType') {
+                    collectForm();
+                    ed.type = t.value;
+                    if (ed.type === 'single') ed.correct = ed.correct.slice(0, 1);
+                    root.querySelector('#edOptionsWrap').hidden = ed.type === 'text';
+                    root.querySelector('#edTextWrap').hidden = ed.type !== 'text';
+                    if (ed.type !== 'text') renderOptions();
+                }
+                else if (t.id === 'edImage' && t.files[0]) {
+                    readImage(t.files[0]).then(img => {
+                        ed.image = img;
+                        const p = root.querySelector('#edPreview');
+                        p.src = img.preview;
+                        p.hidden = false;
+                        root.querySelector('[data-action="clear-image"]').hidden = false;
+                        setMsg('');
+                    }).catch(err => { t.value = ''; setMsg(err.message, true); });
+                }
+            });
+            root.addEventListener('input', e => {
+                if (e.target.classList.contains('text-answer')) saveAnswer(e.target);
+            });
+            root.addEventListener('keydown', e => {
+                // Enter в поле ответа — к следующему вопросу
+                if (e.key === 'Enter' && e.target.classList.contains('text-answer')) {
+                    const last = state.current === state.test.questions.length - 1;
+                    last ? askFinish() : goTo(state.current + 1);
+                }
+            });
+
+            renderList();
+
+            return {
+                renderList,
+                loadRemote,
+                // При выходе: остановить таймер, забыть вопросы из таблицы, вернуться к списку
+                reset() {
+                    stopTimer();
+                    state = null;
+                    ed = null;
+                    remote.rows = [];
+                    remote.status = 'idle';
+                    TESTS = BUILTIN_TESTS.slice();
+                    renderList();
+                }
+            };
+        })();
+
+
+        // =====================================================
+        // 4. ВХОД, РОЛИ, ЛИЧНЫЙ КАБИНЕТ, ТЕМА
+        // =====================================================
+        // Сессия: { login, role, token }. Токен выдаёт Apps Script при входе,
+        // и все запросы к таблице проверяются по нему на сервере.
+        function session() {
+            try { return JSON.parse(localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY) || 'null'); }
+            catch (e) { return null; }
+        }
+        function currentUser() { const s = session(); return s ? s.login : ''; }
+        function currentRole() { const s = session(); return s && ROLES[s.role] ? s.role : 'user'; }
+        function bestKey() { return 'mxk-best:' + currentUser(); }
+        function loadBest() {
+            try { return JSON.parse(localStorage.getItem(bestKey()) || '{}'); } catch (e) { return {}; }
+        }
+
+        // Запрос к Apps Script. POST с text/plain — так браузер не делает лишний CORS-запрос
+        async function api(action, data = {}) {
+            const s = session();
+            let res;
+            try {
+                res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action, token: s ? s.token : '', ...data })
+                });
+            } catch (e) {
+                throw new Error('Нет связи с сервером. Проверьте интернет.');
+            }
+            let out;
+            try { out = await res.json(); }
+            catch (e) { throw new Error('Сервер ответил не так, как ожидалось. Проверьте развёртывание Apps Script.'); }
+            if (out.error === 'auth') {
+                endSession('Сессия закончилась. Войдите снова.');
+                throw new Error('Нужно войти снова.');
+            }
+            if (!out.ok) throw new Error(out.error || 'Ошибка сервера.');
+            return out;
+        }
+
+        // Подставляет логин и роль во все места с data-user-*
+        function applyUser() {
+            const name = currentUser();
+            document.querySelectorAll('[data-user-name]').forEach(el => { el.textContent = name; });
+            document.querySelectorAll('[data-user-initial]').forEach(el => { el.textContent = (name[0] || '?').toUpperCase(); });
+            document.querySelectorAll('[data-user-role]').forEach(el => { el.textContent = ROLES[currentRole()]; });
+            document.documentElement.dataset.role = currentRole();
+        }
+
+        function renderCabinet() {
+            const box = document.getElementById('myResults');
+            const best = loadBest();
+            const done = TESTS.filter(t => best[t.title]);
+            if (!done.length) {
+                box.innerHTML = '<p class="stats-empty">Пока нет пройденных тестов. <a href="#" data-page="test">Перейти к тестам</a></p>';
+                return;
+            }
+            box.innerHTML = '<ul class="stats"></ul>';
+            const list = box.firstChild;
+            done.forEach(t => {
+                const li = document.createElement('li');
+                const title = document.createElement('span');
+                title.textContent = t.title;
+                const score = document.createElement('b');
+                score.textContent = `${best[t.title].score} из ${best[t.title].total}`;
+                li.append(title, score);
+                list.appendChild(li);
+            });
+        }
+
+        // ----- Вход -----
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const errorMsg = document.getElementById('errorMessage');
+
+        function showError(text) { errorMsg.textContent = text; }
+
+        loginForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            const login = document.getElementById('loginInput').value.trim();
+            const password = document.getElementById('passInput').value;
+            const remember = document.getElementById('rememberInput').checked;
+
+            if (!login || !password) return showError('Введите логин и пароль.');
+
+            showError('');
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Проверяем…';
+            try {
+                const out = await api('login', { login, password });
+                const data = JSON.stringify({ login: out.login, role: out.role, token: out.token });
+                try { (remember ? localStorage : sessionStorage).setItem(SESSION_KEY, data); }
+                catch (err) { return showError('Браузер не даёт сохранить вход. Разрешите сайту хранить данные.'); }
+
+                document.getElementById('passInput').value = '';
+                document.documentElement.classList.add('is-auth');
+                applyUser();
+                testApp.reset();
+                initRouter();
+                testApp.loadRemote();
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Войти';
+            }
+        });
+
+        // ----- Выход -----
+        function endSession(message) {
+            try { localStorage.removeItem(SESSION_KEY); sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+            document.querySelectorAll('audio').forEach(a => a.pause());
+            testApp.reset();
+            document.documentElement.classList.remove('is-auth');
+            history.replaceState(null, '', location.pathname);
+            window.scrollTo(0, 0);
+            showError(message || '');
+            document.getElementById('loginInput').focus();
+        }
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            api('logout').catch(() => {}); // токен удалится на сервере, ответ не ждём
+            endSession();
+        });
+
+        // ----- Тема -----
+        function applyTheme(theme) {
+            const root = document.documentElement;
+            if (theme === 'light' || theme === 'dark') root.dataset.theme = theme;
+            else delete root.dataset.theme; // «Как в системе»
+            try { localStorage.setItem('mxk-theme', theme); } catch (e) {}
+        }
+        (() => {
+            let saved = 'system';
+            try { saved = localStorage.getItem('mxk-theme') || 'system'; } catch (e) {}
+            const radio = document.querySelector(`input[name="theme"][value="${saved}"]`)
+                || document.querySelector('input[name="theme"][value="system"]');
+            radio.checked = true;
+            document.querySelectorAll('input[name="theme"]').forEach(r =>
+                r.addEventListener('change', () => applyTheme(r.value)));
+        })();
+
+        try { localStorage.removeItem('mxk-user'); } catch (e) {} // ключ от старой версии сайта
+        applyUser();
+        if (currentUser()) testApp.loadRemote();
+    </script>
+</body>
+</html>
